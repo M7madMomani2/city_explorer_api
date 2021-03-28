@@ -18,7 +18,7 @@ function getLocation(request, response){
 
     response.send(locationObject);
   } catch(error){
-    response.status(500).send('something went wrong ')
+    response.status(500).send(error)
   }
 
 }
@@ -64,7 +64,7 @@ function getWeather(req,res){
     res.send(weatherArray);
   }
   catch(error){
-    res.status(500).send('something went wrong ')
+    res.status(500).send(error)
 
   }
 
