@@ -55,7 +55,7 @@ function getWeather(req,res){
     }
 
 
-    let weatherData = require('./data/ weather.json');
+    let weatherData = require('./data/weather.json');
     let weather = weatherData.data;
     weather.forEach(element =>{
       let newData = new WeatherCnstructor(element.valid_date,element.weather.description);
