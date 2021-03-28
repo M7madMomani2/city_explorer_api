@@ -12,7 +12,7 @@ app.get('/location', getLocation);
 function getLocation(request, response){
   try{
     let city = request.query.city;
-    let locationData = require('./data/location.json');
+    let locationData = require('./Data/location.json');
     let getLocationObject = locationData[0];
     let locationObject = new Location(city,getLocationObject.display_name,getLocationObject.lat,getLocationObject.lon);
 
@@ -55,7 +55,7 @@ function getWeather(req,res){
     }
 
 
-    let weatherData = require('./data/weather.json');
+    let weatherData = require('./Data/weather.json');
     let weather = weatherData.data;
     weather.forEach(element =>{
       let newData = new WeatherCnstructor(element.valid_date,element.weather.description);
