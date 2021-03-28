@@ -7,6 +7,9 @@ const app = express();
 app.use(cors());
 app.get('/location', getLocation);
 app.get('/weather',getWeather);
+app.get('/',(request, response)=>{
+  response.send('<h1>Welcome To City Explorer API</h1>');
+});
 
 app.listen(process.env.PORT || PORT, ()=>{
   console.log(`app is listening on port ${PORT}`);
