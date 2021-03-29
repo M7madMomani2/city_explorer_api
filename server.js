@@ -60,7 +60,7 @@ app.get('/weather',(request,response)=>{
 );
 
 app.get('/',(request, response)=>{
-  response.send('<h1>Welcome To City Explorer API</h1>');
+  response.send('<h1>Welcome To City Explorer API</h1> ');
 });
 
 app.get('*',(request, response)=>{
