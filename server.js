@@ -1,19 +1,14 @@
 'use strict';
-let weatherArray=[];
-const PORT  = process.env.PORT || 3000;
-const express = require('express');
+
+const dotenv = require('dotenv');
+dotenv.config();
+
 const cors = require('cors');
+const express = require('express');
+
 const app = express();
 app.use(cors());
-app.get('/location', getLocation);
-app.get('/weather',getWeather);
-app.get('/',(request, response)=>{
-  response.send('<h1>Welcome To City Explorer API</h1>');
-});
-
-app.listen(process.env.PORT || PORT, ()=>{
-  console.log(`app is listening on port ${PORT}`);
-});
+const PORT  = process.env.PORT || 3001;
 
 function Location(search_query, formatted_query, latitude, longitude){
   this.search_query= search_query;
@@ -22,31 +17,27 @@ function Location(search_query, formatted_query, latitude, longitude){
   this.longitude = longitude;
 }
 
+let weatherArray=[];
 function Weather(forecast,time){
   this.forecast=forecast;
   this.time = time;
   weatherArray.push(this);
-
 }
 
-function getLocation(request, response){
+app.get('/location', (request, response)=>{
   try{
     let city = request.query.city;
-    let locationData = require('./Data/location.json');
-    let getLocationObject = locationData[0];
-    let locationObject = new Location(city,getLocationObject.display_name,getLocationObject.lat,getLocationObject.lon);
-
+    let locationData = require('./Data/location.json')[0];
+    let locationObject = new Location(city,locationData.display_name,locationData.lat,locationData.lon);
     response.send(locationObject);
-  }catch(error){
-    response.status(500).send(error)
+  } catch(error) {
+    response.status(500).send('error')
   }
-
-}
-
-function getWeather(req,res){
+});
+app.get('/weather',(request,response)=>{
   try{
-    if(weatherArray){
-      weatherArray=[];
+    if(weatherArray.length>0){
+      weatherArray.splice(0,weatherArray.length)
     }
     let weatherData = require('./Data/weather.json');
     let weather = weatherData.data;
@@ -54,12 +45,28 @@ function getWeather(req,res){
       let Data = new Weather(element.valid_date,element.weather.description);
       console.log(Data);
     });
-    res.send(weatherArray);
+    response.send(weatherArray);
   }
   catch(error){
-    res.status(500).send(error)
+    response.status(500).send('error')
   }
 
 }
+);
+
+app.get('/',(request, response)=>{
+  response.send('<h1>Welcome To City Explorer API</h1>');
+});
+
+app.get('*',(request, response)=>{
+  response.send(request.query.city);
+});
+
+app.listen(PORT , ()=>{
+  console.log(`listening on port ${PORT}`);
+});
+
+
+
 
 
