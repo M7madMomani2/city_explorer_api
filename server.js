@@ -10,17 +10,17 @@ const app = express();
 app.use(cors());
 const PORT  = process.env.PORT || 3001;
 
-function Location(search_query, formatted_query, latitude, longitude){
+function Location(search_query,object){
   this.search_query= search_query;
-  this. formatted_query= formatted_query;
-  this.latitude= latitude;
-  this.longitude = longitude;
+  this. formatted_query= object.display_name;
+  this.latitude= object.lat;
+  this.longitude = object.lon;
 }
 
 let weatherArray=[];
-function Weather(forecast,time){
-  this.forecast=forecast;
-  this.time = time;
+function Weather(Object){
+  this.forecast=Object.weather.description;
+  this.time = Object.valid_date;
   weatherArray.push(this);
 }
 
@@ -28,12 +28,13 @@ app.get('/location', (request, response)=>{
   try{
     let city = request.query.city;
     let locationData = require('./Data/location.json')[0];
-    let locationObject = new Location(city,locationData.display_name,locationData.lat,locationData.lon);
+    let locationObject = new Location(city,locationData);
     response.send(locationObject);
   } catch(error) {
     response.status(500).send('error')
   }
 });
+
 app.get('/weather',(request,response)=>{
   try{
     if(weatherArray.length>0){
@@ -41,12 +42,8 @@ app.get('/weather',(request,response)=>{
     }
     let weatherData = require('./Data/weather.json');
     let weather = weatherData.data;
-    // weather.forEach(element =>{
-    //   let Data = new Weather(element.valid_date,element.weather.description);
-    //   console.log(Data);
-    // });
     weather.map(element =>{
-      let Data = new Weather(element.valid_date,element.weather.description);
+      let Data = new Weather(element);
       console.log(Data);
     });
 
