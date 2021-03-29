@@ -44,6 +44,8 @@ app.get('/weather',(request,response)=>{
     weather.forEach(element =>{
       let Data = new Weather(element.valid_date,element.weather.description);
       console.log(Data);
+      console.log(weather);
+
     });
     response.send(weatherArray);
   }
