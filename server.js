@@ -41,12 +41,15 @@ app.get('/weather',(request,response)=>{
     }
     let weatherData = require('./Data/weather.json');
     let weather = weatherData.data;
-    weather.forEach(element =>{
+    // weather.forEach(element =>{
+    //   let Data = new Weather(element.valid_date,element.weather.description);
+    //   console.log(Data);
+    // });
+    weather.map(element =>{
       let Data = new Weather(element.valid_date,element.weather.description);
       console.log(Data);
-      console.log(weather);
-
     });
+
     response.send(weatherArray);
   }
   catch(error){
@@ -57,7 +60,7 @@ app.get('/weather',(request,response)=>{
 );
 
 app.get('/',(request, response)=>{
-  response.send('<h1>Welcome To City Explorer API</h1>');
+  response.send('<h1>Welcome To City Explorer API</h1> ');
 });
 
 app.get('*',(request, response)=>{
