@@ -1,74 +1,113 @@
 'use strict';
 
-const dotenv = require('dotenv');
-dotenv.config();
+// Load environment variables
+require('dotenv').config();
 
-const cors = require('cors');
+// Including application dependencies
 const express = require('express');
+const superAgent = require('superagent');
+const cors = require('cors');
 
+// Setup the application
 const app = express();
+
+// Setup environment vairables
+const PORT = process.env.PORT || 3000;
+const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY;
+const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
+const PARKS_API_KEY = process.env.PARKS_API_KEY;
+
+// Setup Application Middlewares
 app.use(cors());
-const PORT  = process.env.PORT || 3001;
 
-function Location(search_query,object){
-  this.search_query= search_query;
-  this. formatted_query= object.display_name;
-  this.latitude= object.lat;
-  this.longitude = object.lon;
-}
-
+//variabeles
+let locationLatitude;
+let locationLongitude;
 let weatherArray=[];
-function Weather(Object){
-  this.forecast=Object.weather.description;
-  this.time = Object.valid_date;
-  weatherArray.push(this);
-}
+let parksArr=[];
+
+
+
+// Route Middlewares
 
 app.get('/location', (request, response)=>{
-  try{
-    let city = request.query.city;
-    let locationData = require('./Data/location.json')[0];
-    let locationObject = new Location(city,locationData);
+  //get search query
+  let city = request.query.city;
+  // use API to get data and send the data to constructer or catch error
+  let url = `https://us1.locationiq.com/v1/search.php?key=${GEOCODE_API_KEY}&q=${city}&format=json`;
+  superAgent.get(url).then(res=>{
+    let data=res.body[0];
+    let locationObject = new Location(city,data);
     response.send(locationObject);
-  } catch(error) {
-    response.status(500).send('error')
-  }
+  }).catch((error)=>{
+    response.send(`Not Found ${error}`);
+  })
 });
 
 app.get('/weather',(request,response)=>{
-  try{
-    if(weatherArray.length>0){
-      weatherArray.splice(0,weatherArray.length)
-    }
-    let weatherData = require('./Data/weather.json');
-    let weather = weatherData.data;
-    weather.map(element =>{
-      let Data = new Weather(element);
-      console.log(Data);
-    });
-
+  // use WEATHER_API_KEY to get data and send the data to constructer or catch error
+  let url=`http://api.weatherbit.io/v2.0/forecast/daily?lat=${locationLatitude}&lon=${locationLongitude}&key=${WEATHER_API_KEY}`
+  superAgent.get(url).then(res=>{
+    let dataWeather=res.body;
+    dataWeather.data.map(element =>{
+      new Weather(element);
+      // console.log(weatherArray);
+    })
     response.send(weatherArray);
-  }
-  catch(error){
-    response.status(500).send('error')
-  }
+    weatherArray=[];
+  })
+    .catch((error)=>{
+      response.status(500).send(`Not Found ${error}`);
+    })
+});
 
-}
-);
+app.get('/parks', (request,response)=>{
+  // use PARKS_API_KEY to get data and send the data to constructer or catch error
+  const url = `https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=${PARKS_API_KEY}`;
+  superAgent.get(url).then(res => {
+    res.body.data.map(data => {
+      new Park(data)
+    });
+    response.status(200).json(parksArr);
+    parksArr=[];
+  }).catch((error) => {
+    response.status(500).send(`Not Found ${error}`);
+  })
+});
 
 app.get('/',(request, response)=>{
   response.send('<h1>Welcome To City Explorer API</h1> ');
 });
 
-app.get('*',(request, response)=>{
-  response.send(request.query.city);
+app.use('*',(request, response)=>{
+  response.status(404).send('Not Found');
 });
 
+
+// Listen for request
 app.listen(PORT , ()=>{
   console.log(`listening on port ${PORT}`);
 });
 
-
-
-
-
+//constructor functions
+function Location(search_query,object){
+  this.search_query= search_query;
+  this. formatted_query= object.display_name;
+  this.latitude= object.lat;
+  this.longitude = object.lon;
+  locationLatitude=object.lat;
+  locationLongitude=object.lon;
+}
+function Weather(object){
+  this.forecast=object.weather.description;
+  this.time = object.valid_date;
+  weatherArray.push(this);
+}
+function Park(object) {
+  this.name = object.fullName;
+  this.address = object.addresses[0].city;
+  this.fee =object.entranceFees[0].cost;
+  this.description = object.description;
+  this.url =object.url;
+  parksArr.push(this);
+}
