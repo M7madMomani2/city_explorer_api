@@ -63,17 +63,19 @@ app.get('/weather',(request,response)=>{
 
 app.get('/parks', (request,response)=>{
   // use PARKS_API_KEY to get data and send the data to constructer or catch error
-  const url = `https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=${PARKS_API_KEY}`;
+  const url = `https://developer.nps.gov/api/v1/parks?api_key=${PARKS_API_KEY}&q=${request.query.search_query}`;
   superAgent.get(url).then(res => {
     res.body.data.map(data => {
+      console.log(data);
       new Park(data)
     });
-    response.status(200).json(parksArr);
-    parksArr=[];
+    response.send(parksArr);
+    console.log(parksArr);
   }).catch((error) => {
-    response.status(500).send(`Not Found ${error}`);
+    response.send(`Not Found ${error}`);
   })
 });
+
 
 app.get('/',(request, response)=>{
   response.send('<h1>Welcome To City Explorer API</h1> ');
@@ -103,9 +105,10 @@ function Weather(object){
   this.time = object.valid_date;
   weatherArray.push(this);
 }
+
 function Park(object) {
   this.name = object.fullName;
-  this.address = object.addresses[0].city;
+  this.address = object.addresses[0].line1 + ' ' + object.addresses[0].city + ' ' + object.addresses[0].stateCode + ' ' + object.addresses[0].postalCode;
   this.fee =object.entranceFees[0].cost;
   this.description = object.description;
   this.url =object.url;
