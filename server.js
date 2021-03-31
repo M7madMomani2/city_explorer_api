@@ -71,6 +71,7 @@ app.get('/parks', (request,response)=>{
     });
     response.send(parksArr);
     console.log(parksArr);
+    parksArr=[];
   }).catch((error) => {
     response.send(`Not Found ${error}`);
   })
