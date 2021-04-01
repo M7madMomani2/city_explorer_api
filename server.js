@@ -88,6 +88,7 @@ app.get('/location', (request, response) => {
     //       res.json(data.rows[0]);
     //     }
     //   });
+    
 
     response.send(locationObject);
   }).catch((error) => {
