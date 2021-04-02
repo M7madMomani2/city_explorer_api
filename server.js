@@ -179,8 +179,6 @@ function Yelp(object) {
     this.url = object.url;
 }
 
-
-
 // Listen for request
 dbClient.connect().then(() => {
     app.listen(PORT, () => {
