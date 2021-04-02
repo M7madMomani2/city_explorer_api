@@ -2,21 +2,20 @@
 `use strict`;
 
 require('dotenv').config();
+const PORT = process.env.PORT;
 const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
 
 const pg = require('pg');
 const app = express();
-
-// Setup environment vairables
-const PORT = process.env.PORT;
+app.use(cors());
 const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 const PARKS_API_KEY = process.env.PARKS_API_KEY;
 const MOVIE_API_KEY = process.env.MOVIE_API_KEY;
 const YELP_API_KEY = process.env.YELP_API_KEY;
-const DATABASE_URL = process.env.DATABASE_URL
+const DATABASE_URL = process.env.DATABASE_URL;
 
 // Setup Application Middlewares
 app.use(cors());
@@ -32,32 +31,47 @@ let yArr = [];
 
 
 
-// Database Connection Setup
-const client = new pg.Client(DATABASE_URL);
-client.on('error', err => { throw err; });
 
+const dbClient = new pg.Client(DATABASE_URL);
+dbClient.on('error', err => {
+    console.log('Not found')
+});
 
 // Route Middlewares
 app.get('/location', (request, response) => {
-    //get search query
-    let city = request.query.city;
-    // use API to get data and send the data to constructer or catch error
-    let url = `https://us1.locationiq.com/v1/search.php?key=${GEOCODE_API_KEY}&q=${city}&format=json`;
-    superagent.get(url).then(res => {
-        let data = res.body[0];
-        let locationObject = new Location(city, data);
-        response.send(locationObject);
-    }).catch((error) => {
-        response.send(`Not Found ${error}`);
-    })
+
+    let search_query = request.query.city;
+    const locationSQL = 'SELECT * FROM locations WHERE  search_query=$1;';
+    const sqlData = [search_query];
+    dbClient.query(locationSQL, sqlData)
+        .then((data)=>{
+            if(data.rowCount === 0){
+                let url = `https://us1.locationiq.com/v1/search.php?key=${GEOCODE_API_KEY}&q=${search_query}&format=json`;
+                superagent.get(url).then(res => {
+                    let data = res.body[0];
+                    let locationObject = new Location(search_query, data);
+                    const insertSQL = 'INSERT INTO locations (search_query,formatted_query, latitude,longitude) VALUES ($1, $2 ,$3 ,$4);';
+                    const inputArray = [search_query, data.formatted_query ,data.latitude,data.longitude];
+                    dbClient.query(insertSQL, inputArray);
+                    response.send(locationObject);
+                })
+
+            } else {
+                locationLatitude = data.rows[0].latitude;
+                locationLongitude = data.rows[0].longitude;
+                response.send(data.rows[0]);
+            }
+        })
+
 });
+
 
 app.get('/weather', (request, response) => {
     // use WEATHER_API_KEY to get data and send the data to constructer or catch error
     let url = `http://api.weatherbit.io/v2.0/forecast/daily?lat=${locationLatitude}&lon=${locationLongitude}&key=${WEATHER_API_KEY}`
     superagent.get(url).then(res => {
-        let dataWeather = res.body;
-        dataWeather.data.map(element => {
+        let weatherData = res.body;
+        weatherData.data.map(element => {
             new Weather(element);
         })
         response.send(weatherArray);
@@ -128,8 +142,8 @@ function Location(search_query, object) {
     this.formatted_query = object.display_name;
     this.latitude = object.lat;
     this.longitude = object.lon;
-    locationLatitude = object.lat;
-    locationLongitude = object.lon;
+    locationLatitude = this.lat;
+    locationLongitude = this.lon;
 }
 function Weather(object) {
     this.forecast = object.weather.description;
@@ -164,8 +178,15 @@ function Yelp(object) {
     this.rating = object.rating;
     this.url = object.url;
 }
+
+
+
 // Listen for request
-app.listen(PORT, () => {
-    console.log(`App listening on port ${PORT}`);
-})
+dbClient.connect().then(() => {
+    app.listen(PORT, () => {
+        console.log(`app is listning on port ${PORT}`);
+    });
+}).catch(err => {
+    console.log(`Sorry there is Database error ${err}`);
+});
 
