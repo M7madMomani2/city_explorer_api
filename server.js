@@ -2,19 +2,25 @@
 `use strict`;
 
 require('dotenv').config();
-const PORT = process.env.PORT;
 const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
 
+const pg = require('pg');
 const app = express();
 
-app.use(cors());
+// Setup environment vairables
+const PORT = process.env.PORT;
 const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 const PARKS_API_KEY = process.env.PARKS_API_KEY;
 const MOVIE_API_KEY = process.env.MOVIE_API_KEY;
 const YELP_API_KEY = process.env.YELP_API_KEY;
+const DATABASE_URL = process.env.DATABASE_URL
+
+// Setup Application Middlewares
+app.use(cors());
+
 
 //variabeles
 let locationLatitude;
@@ -25,8 +31,13 @@ let mArr = [];
 let yArr = [];
 
 
-// Route Middlewares
 
+// Database Connection Setup
+const client = new pg.Client(DATABASE_URL);
+client.on('error', err => { throw err; });
+
+
+// Route Middlewares
 app.get('/location', (request, response) => {
     //get search query
     let city = request.query.city;
