@@ -41,7 +41,7 @@ dbClient.on('error', err => {
 app.get('/location', (request, response) => {
 
     let search_query = request.query.city;
-    const locationSQL = 'SELECT * FROM locations WHERE  search_query=$1;';
+    const locationSQL = 'SELECT * FROM location WHERE  search_query=$1;';
     const sqlData = [search_query];
     dbClient.query(locationSQL, sqlData)
         .then((data)=>{
