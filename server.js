@@ -41,7 +41,7 @@ dbClient.on('error', err => {
 app.get('/location', (request, response) => {
 
     let search_query = request.query.city;
-    const locationSQL = 'SELECT * FROM locations WHERE  search_query=$1;';
+    const locationSQL = 'SELECT * FROM location WHERE  search_query=$1;';
     const sqlData = [search_query];
     dbClient.query(locationSQL, sqlData)
         .then((data)=>{
@@ -50,7 +50,7 @@ app.get('/location', (request, response) => {
                 superagent.get(url).then(res => {
                     let data = res.body[0];
                     let locationObject = new Location(search_query, data);
-                    const insertSQL = 'INSERT INTO locations (search_query,formatted_query, latitude,longitude) VALUES ($1, $2 ,$3 ,$4);';
+                    const insertSQL = 'INSERT INTO location (search_query,formatted_query, latitude,longitude) VALUES ($1, $2 ,$3 ,$4);';
                     const inputArray = [search_query, locationObject.formatted_query ,locationObject.latitude,locationObject.longitude];
                     dbClient.query(insertSQL, inputArray);
                     response.send(locationObject);
