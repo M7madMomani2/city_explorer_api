@@ -34,22 +34,23 @@ const client = new pg.Client({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
 });
+
 // Route Middlewares
 app.get('/location', (request, response) => {
 
     let search_query = request.query.city;
     const locationSQL = 'SELECT * FROM locations WHERE  search_query=$1;';
     const sqlData = [search_query];
-    dbClient.query(locationSQL, sqlData)
+    client.query(locationSQL, sqlData)
         .then((data)=>{
             if(data.rowCount === 0){
                 let url = `https://us1.locationiq.com/v1/search.php?key=${GEOCODE_API_KEY}&q=${search_query}&format=json`;
                 superagent.get(url).then(res => {
-                    let data = res.body[0];
-                    let locationObject = new Location(search_query, data);
+                    let dataloc = res.body[0];
+                    let locationObject = new Location(search_query, dataloc);
                     const insertSQL = 'INSERT INTO locations (search_query,formatted_query, latitude,longitude) VALUES ($1, $2 ,$3 ,$4);';
                     const inputArray = [search_query, locationObject.formatted_query ,locationObject.latitude,locationObject.longitude];
-                    dbClient.query(insertSQL, inputArray);
+                    client.query(insertSQL, inputArray);
                     response.send(locationObject);
                 })
 
@@ -177,7 +178,7 @@ function Yelp(object) {
 }
 
 // Listen for request
-dbClient.connect().then(() => {
+client.connect().then(() => {
     app.listen(PORT, () => {
         console.log(`app is listning on port ${PORT}`);
     });
