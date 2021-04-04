@@ -30,13 +30,10 @@ let mArr = [];
 let yArr = [];
 
 
-
-
-const dbClient = new pg.Client(DATABASE_URL);
-dbClient.on('error', err => {
-    console.log('Not found')
+const client = new pg.Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
 });
-
 // Route Middlewares
 app.get('/location', (request, response) => {
 
