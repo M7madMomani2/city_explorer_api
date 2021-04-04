@@ -8,7 +8,6 @@ const superagent = require('superagent');
 
 const pg = require('pg');
 const app = express();
-app.use(cors());
 const PORT = process.env.PORT;
 const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
@@ -30,9 +29,11 @@ let mArr = [];
 let yArr = [];
 
 
-const client = new pg.Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+
+
+const dbClient = new pg.Client(DATABASE_URL);
+dbClient.on('error', err => {
+    console.log('Not found')
 });
 
 // Route Middlewares
@@ -41,16 +42,16 @@ app.get('/location', (request, response) => {
     let search_query = request.query.city;
     const locationSQL = 'SELECT * FROM locations WHERE  search_query=$1;';
     const sqlData = [search_query];
-    client.query(locationSQL, sqlData)
+    dbClient.query(locationSQL, sqlData)
         .then((data)=>{
             if(data.rowCount === 0){
                 let url = `https://us1.locationiq.com/v1/search.php?key=${GEOCODE_API_KEY}&q=${search_query}&format=json`;
                 superagent.get(url).then(res => {
-                    let dataloc = res.body[0];
-                    let locationObject = new Location(search_query, dataloc);
+                    let data = res.body[0];
+                    let locationObject = new Location(search_query, data);
                     const insertSQL = 'INSERT INTO locations (search_query,formatted_query, latitude,longitude) VALUES ($1, $2 ,$3 ,$4);';
-                    const inputArray = [search_query, locationObject.formatted_query ,locationObject.latitude,locationObject.longitude];
-                    client.query(insertSQL, inputArray);
+                    const inputArray = [search_query, data.formatted_query ,data.latitude,data.longitude];
+                    dbClient.query(insertSQL, inputArray);
                     response.send(locationObject);
                 })
 
@@ -178,7 +179,7 @@ function Yelp(object) {
 }
 
 // Listen for request
-client.connect().then(() => {
+dbClient.connect().then(() => {
     app.listen(PORT, () => {
         console.log(`app is listning on port ${PORT}`);
     });
