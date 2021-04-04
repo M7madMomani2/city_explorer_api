@@ -2,7 +2,6 @@
 `use strict`;
 
 require('dotenv').config();
-const PORT = process.env.PORT;
 const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
@@ -10,6 +9,7 @@ const superagent = require('superagent');
 const pg = require('pg');
 const app = express();
 app.use(cors());
+const PORT = process.env.PORT;
 const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 const PARKS_API_KEY = process.env.PARKS_API_KEY;
@@ -51,7 +51,7 @@ app.get('/location', (request, response) => {
                     let data = res.body[0];
                     let locationObject = new Location(search_query, data);
                     const insertSQL = 'INSERT INTO locations (search_query,formatted_query, latitude,longitude) VALUES ($1, $2 ,$3 ,$4);';
-                    const inputArray = [search_query, data.formatted_query ,data.latitude,data.longitude];
+                    const inputArray = [search_query, locationObject.formatted_query ,locationObject.latitude,locationObject.longitude];
                     dbClient.query(insertSQL, inputArray);
                     response.send(locationObject);
                 })
